@@ -2,11 +2,11 @@ version: '3'
 services:
 
   ratingcurve:
-    image: ratingcurve
+    image: ratingcurve-service
     build: 
-      context: ./src
+      context: .
       dockerfile: Dockerfile
-    container_name: ratingcurve
+    container_name: ratingcurve-service
     ports:
      - "4000:80"
     environment:

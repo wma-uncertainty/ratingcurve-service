@@ -1,16 +1,25 @@
-FROM public.ecr.aws/lambda/provided:al2023
+# Debian, Alpine, etc don't seem to work with pymc
+FROM ubuntu:latest
 
-# Copy requirements.txt
-COPY requirements.txt ${LAMBDA_TASK_ROOT}
-COPY pytensor_caller_config ${LAMBDA_TASK_ROOT}/caller_rc
-COPY lambda_function.py ${LAMBDA_TASK_ROOT}
+WORKDIR /usr/src/app
 
+#ENV FLASK_APP=service.py
+#ENV FLASK_RUN_HOST=0.0.0.0
+ENV PORT=4000
 
-# Update image
-RUN dnf install -y g++ python3.11 python3.11-pip python3.11-devel
+COPY requirements.txt requirements.txt
+#COPY ./src ./src
+COPY ./src .
+
+# Install g++, python and pip
+#RUN apk add --update gcc musl-dev linux-headers
+#RUN apk add --update build-base python3 py3-pip
+RUN apt-get update && \
+    apt-get install -y g++ python3 python3-pip
 
 # Install the specified packages
-RUN python3.11 -m pip install -r requirements.txt
+RUN python3 -m pip install --upgrade pip
+RUN pip3 install -r requirements.txt
 
 # Precompile function code
 #COPY pytensor_build_config ${LAMBDA_TASK_ROOT}/build_rc
@@ -21,4 +30,6 @@ RUN python3.11 -m pip install -r requirements.txt
 ## WARNING: WSL will override this chmod if /etc/wsl.conf isn't configured
 #RUN chmod -R 755 ${LAMBDA_TASK_ROOT}/pytensor
 
-ENTRYPOINT PYTENSORRC=caller_rc python3.11 -m awslambdaric lambda_function.handler
+ENTRYPOINT [ "python3" ]
+CMD ["service.py"]
+#CMD ["flask", "run"]
