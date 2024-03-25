@@ -1,0 +1,14 @@
+version: '3'
+services:
+
+  ratingcurve:
+    image: ratingcurve
+    build: 
+      context: ./src
+      dockerfile: Dockerfile
+    container_name: ratingcurve
+    ports:
+     - "4000:80"
+    environment:
+      - PORT=80
+    restart: "no"
