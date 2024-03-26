@@ -9,7 +9,7 @@ ENV PORT=4000
 
 COPY requirements.txt requirements.txt
 #COPY ./src ./src
-COPY ./src .
+COPY . .
 
 # Install g++, python and pip
 #RUN apk add --update gcc musl-dev linux-headers
