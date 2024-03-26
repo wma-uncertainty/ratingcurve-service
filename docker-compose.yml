@@ -4,7 +4,7 @@ services:
   ratingcurve:
     image: ratingcurve-service
     build: 
-      context: .
+      context: ./src
       dockerfile: Dockerfile
     container_name: ratingcurve-service
     ports:
