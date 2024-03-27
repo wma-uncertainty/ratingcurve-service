@@ -1,3 +1,4 @@
 flask
+apiflask
 mkl-service
 ratingcurve==1.0.1
