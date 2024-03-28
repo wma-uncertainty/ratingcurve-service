@@ -1,5 +1,6 @@
 from apiflask import APIFlask, Schema
 from apiflask.fields import List, Float
+from flask import render_template
 import pandas as pd
 
 from .tests import test_rating
@@ -26,9 +27,9 @@ class RatingOut(Schema):
 
 
 @app.route('/', methods=['GET'])
-def hello_world():
-    """Basic usage info"""
-    return 'Hello, World!'
+def landing():
+    """Landing page"""
+    return render_template('index.html')
 
 
 @app.route('/test', methods=['GET'])
