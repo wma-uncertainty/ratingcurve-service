@@ -6,9 +6,9 @@ services:
     build: 
       context: ./rating-service
       dockerfile: Dockerfile
+      args:
+      - FLASK_RUN_PORT=80
     container_name: rating-service
     ports:
      - "4000:80"
-    environment:
-      - PORT=80
     restart: "no"

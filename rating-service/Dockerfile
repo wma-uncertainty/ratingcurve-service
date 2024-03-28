@@ -3,9 +3,11 @@ FROM ubuntu:latest
 
 WORKDIR /usr/src/app
 
+ARG FLASK_RUN_PORT=4000
+
 ENV FLASK_APP=app
 ENV FLASK_RUN_HOST=0.0.0.0
-ENV PORT=4000
+ENV FLASK_RUN_PORT=$FLASK_RUN_PORT
 
 COPY requirements.txt requirements.txt
 COPY ./app ./app
@@ -18,4 +20,4 @@ RUN apt-get update && \
 RUN python3 -m pip install --upgrade pip
 RUN pip3 install -r requirements.txt
 
-CMD ["flask", "run", "-p", "$PORT"]
+CMD ["flask", "run"]
