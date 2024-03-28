@@ -58,4 +58,5 @@ def fit(n):
 
 def _format_rating_table(rating):
     df = rating.table()
+    df = df.round(2)
     return df.to_dict('list')
