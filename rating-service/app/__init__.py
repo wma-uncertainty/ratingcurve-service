@@ -1,6 +1,9 @@
 from apiflask import APIFlask, Schema
 from apiflask.fields import List, Float
-from flask import render_template
+from flask import render_template, request
+
+from ratingcurve.ratings import PowerLawRating
+
 import pandas as pd
 
 from .tests import test_rating
@@ -9,7 +12,7 @@ from .tests import test_rating
 test_rating()
 
 app = APIFlask(
-    __name__, title='Ratingcurve API', version='0.1.0', spec_path='/openapi.json'
+    __name__, title='ratingcurve API', version='0.1.0', spec_path='/openapi.json'
 )
 
 
@@ -22,8 +25,8 @@ class ObservationsIn(Schema):
 class RatingOut(Schema):
     stage = List(Float)
     discharge = List(Float)
-    median = List(Float) #discharge_median
-    gse = List(Float) #discharge_gse
+    median = List(Float)  # discharge_median
+    gse = List(Float)  # discharge_gse
 
 
 @app.route('/', methods=['GET'])
@@ -43,15 +46,14 @@ def test():
 @app.route('/fit/powerlaw/<int:n>', methods=['POST'])
 @app.input(ObservationsIn)
 @app.output(RatingOut)
-def fit(n):
+def fit(json_data, n):
     """Fit a power-law rating curve with n segments"""
-    request = request.get_json()
-    df = pd.read_json(request)
+    df = pd.DataFrame.from_dict(json_data)
 
     rating = PowerLawRating(segments=n)
 
     trace = rating.fit(
-        q=df['discharge'], h=df['stage'], q_sigma=df['discharge_se'], progressbar=False
+        q=df['discharge'], h=df['stage'], q_sigma=df['discharge_se'], progressbar=True
     )
 
     return _format_rating_table(rating)

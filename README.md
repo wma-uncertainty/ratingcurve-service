@@ -60,5 +60,5 @@ flask run --debug
 or
 
 ```bash
-flask --app rating_service run --debug
+flask --app app run --debug
 ```
