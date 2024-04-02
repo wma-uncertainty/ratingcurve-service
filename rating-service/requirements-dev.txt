@@ -1,2 +1,4 @@
 pytest
 coverage
+pre-commit
+ruff

@@ -1,6 +1,6 @@
 from apiflask import APIFlask, Schema
 from apiflask.fields import List, Float
-from flask import render_template, request
+from flask import render_template
 
 from ratingcurve.ratings import PowerLawRating
 
@@ -12,7 +12,10 @@ from .tests import test_rating
 test_rating()
 
 app = APIFlask(
-    __name__, title='ratingcurve API', version='0.1.0', spec_path='/openapi.json'
+    __name__,
+    title='ratingcurve API',
+    version='0.1.0',
+    spec_path='/openapi.json',
 )
 
 
@@ -52,8 +55,11 @@ def fit(json_data, n):
 
     rating = PowerLawRating(segments=n)
 
-    trace = rating.fit(
-        q=df['discharge'], h=df['stage'], q_sigma=df['discharge_se'], progressbar=True
+    _ = rating.fit(
+        q=df['discharge'],
+        h=df['stage'],
+        q_sigma=df['discharge_se'],
+        progressbar=True,
     )
 
     return _format_rating_table(rating)
