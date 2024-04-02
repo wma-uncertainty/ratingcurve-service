@@ -11,7 +11,6 @@ def test_rating(segments=1, iterations=100):
     powerrating = PowerLawRating(segments=segments)
 
     # fit the model
-    # TODO reduce iterations b/c we don't need a good fit
     _ = powerrating.fit(
         q=df['q'],
         h=df['stage'],
@@ -20,3 +19,10 @@ def test_rating(segments=1, iterations=100):
     )
 
     return powerrating
+
+
+def format_rating_table(rating):
+    """TODO docstring"""
+    df = rating.table()
+    df = df.round(2)
+    return df.to_dict('list')
