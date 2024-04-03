@@ -22,22 +22,34 @@ LICENSE = {
 
 
 class ObservationsIn(Schema):
-    stage = List(Float, required=True)
-    discharge = List(Float, required=True)
-    discharge_se = List(Float, required=False)
+    stage = List(Float, required=True, description='Stage observations')
+    discharge = List(Float, required=True, description='Discharge observations')
+    discharge_se = List(Float, required=False, description='Discharge standard error')
 
 
 class RatingOut(Schema):
-    stage = List(Float)
-    discharge = List(Float)
-    median = List(Float)  # discharge_median
-    gse = List(Float)  # discharge_gse
+    stage = List(Float, description='Stage')
+    discharge = List(Float, description='Expected discharge')
+    median = List(Float, description='Median discharge')
+    gse = List(Float, description='Geometric standard error')
 
 
 class FitPowerLawQuery(Schema):
-    segments = Integer(load_default=1, validate=lambda x: x > 0)
-    method = String(load_default='advi', validate=OneOf(['advi', 'nuts']))
-    format = String(load_default='json', validate=OneOf(['json']))  # csv, html
+    segments = Integer(
+        load_default=1,
+        validate=lambda x: x > 0,
+        description='Number of segments in the rating curve',
+    )
+    method = String(
+        load_default='advi',
+        validate=OneOf(['advi', 'nuts']),
+        description='Fit with ADVI (fast) or NUTS (accurate)',
+    )
+    format = String(
+        load_default='json',
+        validate=OneOf(['json']),  # csv, html
+        description='Response format: json',  # csv, or html
+    )
 
 
 # Create the ratingcurve application
@@ -54,6 +66,7 @@ def create_app():
 
     app.description = DESCRIPTION
     app.license = LICENSE
+
     # precompile the rating model (TODO set compile directory)
     test_rating()
 
