@@ -8,6 +8,18 @@ import pandas as pd
 
 from .utils import test_rating, format_rating_table
 
+NAME = 'ratingcurve'
+VERSION = '0.1.0'
+DESCRIPTION = """
+A microservice that fits stage-discharge rating curves using the
+<a href="https://github.com/thodson-usgs/ratingcurve">ratingcurve</a>
+Python library. 
+"""
+LICENSE = {
+    'name': 'CC0',
+    'url': 'https://creativecommons.org/public-domain/cc0/',
+}
+
 
 class ObservationsIn(Schema):
     stage = List(Float, required=True)
@@ -33,18 +45,16 @@ def create_app():
 
     app = APIFlask(
         __name__,
-        title='ratingcurve',
-        version='0.1.0',
+        title=NAME,
+        version=VERSION,
         spec_path='/openapi.json',
+        docs_path='/',  # serve the Swagger UI at root
     )
 
-    # precompile the rating model (TODO async)
+    app.description = DESCRIPTION
+    app.license = LICENSE
+    # precompile the rating model (TODO set compile directory)
     test_rating()
-
-    @app.route('/', methods=['GET'])
-    def landing():
-        """Landing page"""
-        return render_template('index.html')
 
     @app.route('/test', methods=['GET'])
     @app.output(RatingOut)
