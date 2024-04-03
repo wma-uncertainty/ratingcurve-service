@@ -1,6 +1,6 @@
 from apiflask import APIFlask, Schema
 from apiflask.fields import List, Float, Integer, String
-from flask import render_template
+from apiflask.validators import OneOf
 
 from ratingcurve.ratings import PowerLawRating
 
@@ -35,8 +35,9 @@ class RatingOut(Schema):
 
 
 class FitPowerLawQuery(Schema):
-    segments = Integer(load_default=1)
-    format = String(load_default='json')
+    segments = Integer(load_default=1, validate=lambda x: x > 0)
+    method = String(load_default='advi', validate=OneOf(['advi', 'nuts']))
+    format = String(load_default='json', validate=OneOf(['json']))  # csv, html
 
 
 # Create the ratingcurve application
@@ -70,6 +71,7 @@ def create_app():
     def fit(json_data, query_data):
         """Fit a power-law rating curve with n segments"""
         segments = query_data.get('segments')
+        method = query_data.get('method')
         df = pd.DataFrame.from_dict(json_data)
 
         rating = PowerLawRating(segments=segments)
@@ -78,6 +80,7 @@ def create_app():
             q=df['discharge'],
             h=df['stage'],
             q_sigma=df['discharge_se'],
+            method=method,
             progressbar=True,
         )
 
