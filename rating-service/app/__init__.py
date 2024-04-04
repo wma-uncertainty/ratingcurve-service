@@ -6,7 +6,7 @@ from ratingcurve.ratings import PowerLawRating
 
 import pandas as pd
 
-from .utils import test_rating, format_rating_table
+from .utils import test_rating, format_rating_table, format_form_to_df
 
 NAME = 'ratingcurve'
 VERSION = '0.1.0'
@@ -34,6 +34,19 @@ class RatingOut(Schema):
     gse = List(Float, description='Geometric standard error')
 
 
+class FormIn(Schema):
+    data = String(
+        required=True,
+        description='Stage, discharge, and discharge standard error in CSV format',
+    )
+
+
+class FormOut(Schema):
+    data = String(
+        description='Rating table in CSV format',
+    )
+
+
 class FitPowerLawQuery(Schema):
     segments = Integer(
         load_default=1,
@@ -45,11 +58,11 @@ class FitPowerLawQuery(Schema):
         validate=OneOf(['advi', 'nuts']),
         description='Fit with ADVI (fast) or NUTS (accurate)',
     )
-    format = String(
-        load_default='json',
-        validate=OneOf(['json']),  # csv, html
-        description='Response format: json',  # csv, or html
-    )
+    # format = String(
+    #    load_default='json',
+    #    validate=OneOf(['json']),  # csv, html
+    #    description='Response format: json',  # csv, or html
+    # )
 
 
 # Create the ratingcurve application
@@ -76,6 +89,29 @@ def create_app():
         """Test endpoint that computes and returns a rating table"""
         rating = test_rating(segments=2, iterations=100_000)
         return format_rating_table(rating)
+
+    @app.route('/fit/powerlaw/csv/', methods=['POST'])
+    @app.input(FormIn, location='form')
+    @app.input(FitPowerLawQuery, location='query')
+    @app.output(FormOut)
+    def fit_csv(form_data, query_data):
+        """Fit a power-law rating curve with n segments"""
+        segments = query_data.get('segments')
+        method = query_data.get('method')
+        breakpoint()
+        df = format_form_to_df(form_data)
+
+        rating = PowerLawRating(segments=segments)
+
+        _ = rating.fit(
+            q=df['discharge'],
+            h=df['stage'],
+            q_sigma=df['discharge_se'],
+            method=method,
+            progressbar=True,
+        )
+
+        return rating.table().to_csv()
 
     @app.route('/fit/powerlaw/', methods=['POST'])
     @app.input(ObservationsIn, location='json')
