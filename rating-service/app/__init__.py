@@ -54,12 +54,22 @@ def create_app():
         rrt_csv = files_data.get('csv')
         df = rrt_file_to_df(rrt_csv)
 
-        # rating = fit_powerlaw_rating(df, segments=segments, method=method)
-        # out = rating_to_rrt(rating)
+        rating = fit_powerlaw_rating(df, segments=segments, method=method)
 
-        # testing REMOVE
-        rrt_csv.stream.seek(0)
-        out = BytesIO(rrt_csv.stream.read())
+        # TODO use a more general format_rating_table
+        out = rating.table()
+        out = out.round(2)
+        column_map = {'stage': 'Gage Height (ft)', 'discharge': 'Discharge (ft^3/s)'}
+
+        out = out.rename(columns=column_map)
+        out = out[list(column_map.values())]  # keep only columns in column_map
+        out = BytesIO(out.to_csv(index=False).encode())
+        # or
+        # out = rating_to_rrt(rating) # which also formats table for RRT
+
+        # TODO REMOVE
+        # rrt_csv.stream.seek(0)
+        # out = BytesIO(rrt_csv.stream.read())
 
         return send_file(
             out,

@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pandas as pd
+import re
 
 from io import BytesIO
 from ratingcurve.ratings import PowerLawRating
@@ -61,7 +62,18 @@ def rrt_file_to_df(rrt_csv: FileStorage) -> DataFrame:
     rrt_csv.stream.seek(0)
     df = pd.read_csv(rrt_csv)
 
-    # TODO format the RRT file for ratingcurve
+    # filter RRT data where "Use" is True
+    df = df.loc[df.Use]
+
+    # drop units from column names, which are in parentheses
+    # eg., 'stage (ft)' -> 'stage'
+    df = df.rename(columns=lambda x: re.sub(' \(.*\)', '', x))
+
+    # TODO save these names as globals
+    df = df.rename(columns={'Gage height': 'stage', 'Discharge': 'discharge'})
+
+    # TODO include or compute uncertainty in discharge
+    df['discharge_se'] = 0.0
 
     return df
 
