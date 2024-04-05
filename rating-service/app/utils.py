@@ -1,14 +1,16 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
+import pandas as pd
+
+from io import BytesIO
 from ratingcurve.ratings import PowerLawRating
 from ratingcurve import data
-
-from io import StringIO
 
 if TYPE_CHECKING:
     from arviz import InferenceData
     from pandas import DataFrame
+    from werkzeug.datastructures import FileStorage
 
 
 def test_rating(segments: int = 1, iterations: int = 100) -> InferenceData:
@@ -30,6 +32,23 @@ def test_rating(segments: int = 1, iterations: int = 100) -> InferenceData:
     return rating
 
 
+def fit_powerlaw_rating(
+    df: DataFrame, segments: int = 1, method: str = 'advi', **kwargs
+) -> PowerLawRating:
+    """Fit a power-law rating curve"""
+
+    rating = PowerLawRating(segments=segments)
+    _ = rating.fit(
+        q=df['discharge'],
+        h=df['stage'],
+        q_sigma=df['discharge_se'],
+        method=method,
+        **kwargs,
+    )
+
+    return rating
+
+
 def format_rating_table(rating: InferenceData):
     """TODO docstring"""
     df = rating.table()
@@ -37,11 +56,20 @@ def format_rating_table(rating: InferenceData):
     return df.to_dict('list')
 
 
-def format_form_to_df(form_data: dict) -> DataFrame:
-    """Format form data to a pandas DataFrame"""
-    form_string = form_data.get('data').replace(' ', '\n')
+def rrt_file_to_df(rrt_csv: FileStorage) -> DataFrame:
+    """Convert RRT file to a pandas DataFrame"""
+    rrt_csv.stream.seek(0)
+    df = pd.read_csv(rrt_csv)
 
-    df = pd.read_csv(StringIO(form_string), sep='\t')
-    # TODO rename columns as needed
+    # TODO format the RRT file for ratingcurve
 
     return df
+
+
+def rating_to_rrt(rating: PowerLawRating) -> BytesIO:
+    """Convert rating to RRT table"""
+    df = rating.table()
+    out = BytesIO('dump the csv here')
+    rating.rrt().to_csv(out, index=False)
+    out.seek(0)
+    return out

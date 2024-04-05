@@ -1,12 +1,12 @@
-from apiflask import APIFlask, Schema
-from apiflask.fields import List, Float, Integer, String, File
-from apiflask.validators import OneOf, FileType
+from apiflask import APIFlask
+from flask import send_file
 
-from ratingcurve.ratings import PowerLawRating
+from io import BytesIO
 
 import pandas as pd
 
-from .utils import test_rating, format_rating_table, format_form_to_df
+from .schema import ObservationsIn, RatingOut, RRTIn, RRTOut, FitPowerLawQuery
+from .utils import test_rating, fit_powerlaw_rating, format_rating_table, rrt_file_to_df
 
 NAME = 'ratingcurve'
 VERSION = '0.1.0'
@@ -19,46 +19,6 @@ LICENSE = {
     'name': 'CC0',
     'url': 'https://creativecommons.org/public-domain/cc0/',
 }
-
-
-class ObservationsIn(Schema):
-    stage = List(Float, required=True, description='Stage observations')
-    discharge = List(Float, required=True, description='Discharge observations')
-    discharge_se = List(Float, required=False, description='Discharge standard error')
-
-
-class RatingOut(Schema):
-    stage = List(Float, description='Stage')
-    discharge = List(Float, description='Expected discharge')
-    median = List(Float, description='Median discharge')
-    gse = List(Float, description='Geometric standard error')
-
-
-class RRTIn(Schema):
-    csv = File(
-        required=True,
-        validate=FileType(['.csv']),
-        description='CSV containing field observations exported from RRT',
-    )
-
-
-class RRTOut(Schema):
-    csv = File(
-        description='CSV containing a rating table to be imported into RRT',
-    )
-
-
-class FitPowerLawQuery(Schema):
-    segments = Integer(
-        load_default=1,
-        validate=lambda x: x > 0,
-        description='Number of segments in the rating curve',
-    )
-    method = String(
-        load_default='advi',
-        validate=OneOf(['advi', 'nuts']),
-        description='Fit with ADVI (fast) or NUTS (accurate)',
-    )
 
 
 # Create the ratingcurve application
@@ -76,10 +36,7 @@ def create_app():
     app.description = DESCRIPTION
     app.license = LICENSE
 
-    # precompile the rating model (TODO set compile directory)
-    test_rating()
-
-    @app.route('/test', methods=['GET'])
+    @app.route('/test/powerlaw', methods=['GET'])
     @app.output(RatingOut)
     def test():
         """Test endpoint that computes and returns a rating table"""
@@ -91,24 +48,24 @@ def create_app():
     @app.input(RRTIn, location='files')
     @app.output(RRTOut)
     def fit_rrt(files_data, query_data):
-        """Fit a power-law rating curve with n segments"""
+        """Fit a power-law rating curve (RRT version)"""
         segments = query_data.get('segments')
         method = query_data.get('method')
-        csv = files_data.get('csv')
-        breakpoint()
-        # df = format_form_to_df(form_data)
+        rrt_csv = files_data.get('csv')
+        df = rrt_file_to_df(rrt_csv)
 
-        # rating = PowerLawRating(segments=segments)
+        # rating = fit_powerlaw_rating(df, segments=segments, method=method)
+        # out = rating_to_rrt(rating)
 
-        # _ = rating.fit(
-        #    q=df['discharge'],
-        #    h=df['stage'],
-        #    q_sigma=df['discharge_se'],
-        #    method=method,
-        #    progressbar=True,
-        # )
+        # testing REMOVE
+        rrt_csv.stream.seek(0)
+        out = BytesIO(rrt_csv.stream.read())
 
-        return csv
+        return send_file(
+            out,
+            as_attachment=True,
+            download_name='rating_table.csv',
+        )
 
     @app.route('/fit/powerlaw/', methods=['POST'])
     @app.input(ObservationsIn, location='json')
@@ -119,17 +76,11 @@ def create_app():
         segments = query_data.get('segments')
         method = query_data.get('method')
         df = pd.DataFrame.from_dict(json_data)
-
-        rating = PowerLawRating(segments=segments)
-
-        _ = rating.fit(
-            q=df['discharge'],
-            h=df['stage'],
-            q_sigma=df['discharge_se'],
-            method=method,
-            progressbar=True,
-        )
+        rating = fit_powerlaw_rating(df, segments=segments, method=method)
 
         return format_rating_table(rating)
+
+    # precompile the rating model (TODO set compile directory)
+    test_rating()
 
     return app
