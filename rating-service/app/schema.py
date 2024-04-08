@@ -2,6 +2,14 @@ from apiflask import Schema
 from apiflask.fields import List, Float, Integer, String, File
 from apiflask.validators import OneOf, FileType
 
+mimetypes = {
+    'csv': ['text/csv'],
+    'excel': [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel',
+    ],
+}
+
 
 class ObservationsIn(Schema):
     stage = List(Float, required=True, description='Stage observations')
@@ -19,14 +27,14 @@ class RatingOut(Schema):
 class RRTIn(Schema):
     csv = File(
         required=True,
-        validate=FileType(['.csv']),
-        description='CSV containing field observations exported from RRT',
+        validate=FileType(['.csv', '.xlsx', '.xls']),
+        description='Excel or CSV file containing field observations exported from RRT',
     )
 
 
 class RRTOut(Schema):
     csv = File(
-        description='CSV containing a rating table to be imported into RRT',
+        description='CSV file containing a rating table to be imported into RRT',
     )
 
 

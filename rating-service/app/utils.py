@@ -8,6 +8,8 @@ from io import BytesIO
 from ratingcurve.ratings import PowerLawRating
 from ratingcurve import data
 
+from .schema import mimetypes
+
 if TYPE_CHECKING:
     from arviz import InferenceData
     from pandas import DataFrame
@@ -60,13 +62,19 @@ def format_rating_table(rating: InferenceData):
 def rrt_file_to_df(rrt_csv: FileStorage) -> DataFrame:
     """Convert RRT file to a pandas DataFrame"""
     rrt_csv.stream.seek(0)
-    df = pd.read_csv(rrt_csv)
+
+    if rrt_csv.mimetype in mimetypes['csv']:
+        df = pd.read_csv(rrt_csv)
+
+    elif rrt_csv.mimetype in mimetypes['excel']:
+        df = pd.read_excel(rrt_csv)
 
     # filter RRT data where "Use" is True
     df = df.loc[df.Use]
 
     # drop units from column names, which are in parentheses
     # eg., 'stage (ft)' -> 'stage'
+    # TODO keep the units metadata to generate the RRT rating
     df = df.rename(columns=lambda x: re.sub(' \(.*\)', '', x))
 
     # TODO save these names as globals

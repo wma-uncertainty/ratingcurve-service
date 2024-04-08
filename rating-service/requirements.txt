@@ -1,4 +1,5 @@
 flask
 apiflask
+openpyxl
 mkl-service
 ratingcurve==1.0.1
