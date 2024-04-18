@@ -90,6 +90,26 @@ def create_app():
 
         return format_rating_table(rating)
 
+    @app.route('/healthz', methods=['GET'])
+    def healthz():
+        """Health check endpoint"""
+        return "Healthy", 200
+
+    @app.route('/readyz', methods=['GET'])
+    def readyz():
+        """Readiness check endpoint
+
+        This check will compile the rating model and fit it to a test dataset.
+        Allow a minute or so for it to complete.
+        """
+        try:
+            test_rating()
+
+        except Exception as e:
+            return f"Error: {e}", 503
+
+        return "Ready", 200
+
     # precompile the rating model (TODO set compile directory)
     test_rating()
 

@@ -26,6 +26,17 @@ spec:
           env:
             - name: PORT
               value: "4000"
+          livenessProbe:
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            httpGet:
+              path: /healthz
+              port: 4000
+              scheme: HTTP
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+
 ---
 apiVersion: v1
 kind: Service
